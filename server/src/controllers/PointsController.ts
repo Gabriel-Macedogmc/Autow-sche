@@ -3,8 +3,25 @@ import { Request, Response } from 'express';
 import knex from '../database/connections'
 
 class PointsController {
+
+    async show(request: Request, response: Response) {
+
+        try {
+
+            const { id } = request.params;
+
+            const point = await knex('points').where('id', id);
+
+            return response.status(200).json({ point });
+
+        } catch (error) {
+
+            return response.status(401).json({ error: "Id not found!" });
+            
+        }
+    }
     async create(request: Request, response: Response) {
-    
+
         try {
             //pega todas as variaves do corpo da requisicao 
             const {
@@ -18,9 +35,6 @@ class PointsController {
                 city,
                 wash,
             } = request.body;
-
-            //cria uma transacao no BD para caso algo der erro na gravacao
-            
 
             //grava todas as variaveis do corpo da requisicao em um OBJETO 
             const point = {
@@ -40,7 +54,7 @@ class PointsController {
 
             //cria uma variavel que armavena o id da Gravacao
             const points_id = insertedIds[0];
-            
+
             //serializa uma variavel com o retorno do ID da lavagem e o ID do ponto cadastrado
             const pointWash = wash.map((wash_id: Number) => {
                 return {
@@ -52,18 +66,14 @@ class PointsController {
             //grava a serializacao na tabela Poinst_Wash
             await knex('points_wash').insert(pointWash)
 
-            //
-          
-
-            return response.json({
+            return response.status(201).json({
                 id: points_id,
                 ...point,
             });
 
         } catch (error) {
-            response.json({
-                error: true,
-                message: error.message
+            return response.status(401).json({
+                error: "Creation Failed.",
             });
         };
     };
