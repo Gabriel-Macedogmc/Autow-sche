@@ -4,18 +4,45 @@ import knex from '../database/connections'
 
 class PointsController {
 
-    async show(request: Request, response: Response) {
+    async index(request: Request, response: Response) {
+        const { city, uf, washs } = request.query;
 
+        try {
+            const parsedWash = String(washs).split('.').map(wash => Number(wash.trim()));
+
+            const points = await knex('points')
+                .join('points_wash', 'points.id', '=', 'points_wash.points_id')
+                .whereIn('points_wash.wash_id', parsedWash)
+                .where('city', String(city))
+                .where('uf', String(uf))
+                .distinct()
+                .select('points.*')
+
+            return response.status(200).json(points);
+        } catch (error) {
+            return response.status(401).json({ message: error.message, error: "Point not Found" })
+        }
+
+    }
+
+    async show(request: Request, response: Response) {
 
         const { id } = request.params;
 
         const point = await knex('points').where('id', id).first();
 
         if (!point) {
+
             return response.status(401).json({ error: "Id not Found!" })
+
         }
 
-        return response.status(200).json({ point });
+        const washs = await knex('wash')
+            .join('points_wash', 'wash.id', '=', 'points_wash.wash_id')
+            .where('points_wash.points_id', id)
+            .select('wash.title')
+
+        return response.status(200).json({ point, washs });
 
     }
     async create(request: Request, response: Response) {
