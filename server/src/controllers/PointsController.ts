@@ -6,19 +6,17 @@ class PointsController {
 
     async show(request: Request, response: Response) {
 
-        try {
 
-            const { id } = request.params;
+        const { id } = request.params;
 
-            const point = await knex('points').where('id', id);
+        const point = await knex('points').where('id', id).first();
 
-            return response.status(200).json({ point });
-
-        } catch (error) {
-
-            return response.status(401).json({ error: "Id not found!" });
-            
+        if (!point) {
+            return response.status(401).json({ error: "Id not Found!" })
         }
+
+        return response.status(200).json({ point });
+
     }
     async create(request: Request, response: Response) {
 
